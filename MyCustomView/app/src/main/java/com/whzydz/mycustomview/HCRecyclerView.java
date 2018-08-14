@@ -49,7 +49,7 @@ public class HCRecyclerView extends RecyclerView{
     //动画时间
     private final int ANIM_INTERVAL = 200;
 
-    private ItemClickListener l;
+    private DeleteListener deleteListener;
 
     public HCRecyclerView(Context context) {
         this(context, null);
@@ -102,8 +102,8 @@ public class HCRecyclerView extends RecyclerView{
                 delView.setOnClickListener(new OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        if(l != null) {
-                            l.onDelete(pos);
+                        if(deleteListener != null) {
+                            deleteListener.onDelete(pos);
                         }
                     }
                 });
@@ -140,7 +140,7 @@ public class HCRecyclerView extends RecyclerView{
                 double tanValue = Math.abs(dy) / Math.abs(dx);
                 double angle = Math.toDegrees(Math.atan(tanValue));
 
-                if (angle < 45 && !scrollingV) {
+                if (angle < 20 && !scrollingV) {
                     //如果开始侧滑，禁止上下滑动
                     if(layoutManager instanceof HCLinearLayoutManager) {
                         ((HCLinearLayoutManager)layoutManager).setCanScrollVertically(false);
@@ -189,11 +189,15 @@ public class HCRecyclerView extends RecyclerView{
         return super.onTouchEvent(e);
     }
 
-    public static class HCAdapter extends Adapter<HCViewHolder> {
+    /**
+     *
+     * @param <T>:数据集的数据类型
+     * @param <VH>：自定义的ViewHolder
+     */
+    public static abstract class HCAdapter <T, VH extends ViewHolder> extends Adapter {
         private Context context;
-        private List<Map<Integer, Object>> data;
+        protected List<T> data;
         private int itemLayoutId;
-        private int delIconResId;
 
         //删除按钮的padding
         private final int PADDING = 24;
@@ -208,25 +212,22 @@ public class HCRecyclerView extends RecyclerView{
          * @param context：上下文
          * @param data：数据集合，每一个元素，代表了控件id与数据的对应关系
          * @param itemLayoutId：每一行的view
-         * @param delIconResId：删除按钮的图标id
          */
-        public HCAdapter(Context context, List<Map<Integer, Object>> data, int itemLayoutId, int delIconResId) {
+        public HCAdapter(Context context, List<T> data, int itemLayoutId) {
             this.context = context;
             this.data = data;
             this.itemLayoutId = itemLayoutId;
-            this.delIconResId = delIconResId;
-
         }
 
         @Override
-        public HCViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        public VH onCreateViewHolder(ViewGroup parent, int viewType) {
             LinearLayout container = new LinearLayout(context);
-            container.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
+            container.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, 150));
             container.setOrientation(LinearLayout.HORIZONTAL);
 
             //添加每一行的自定义显示内容
             View v = LayoutInflater.from(context).inflate(itemLayoutId, container, false);
-            container.addView(v, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            container.addView(v, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
 
             //添加每一行最后固定的删除按钮
             TextView tvDel = new TextView(context);
@@ -242,35 +243,21 @@ public class HCRecyclerView extends RecyclerView{
             int delLength = Math.round(tvLength + PADDING * 2);
             container.addView(tvDel, new LinearLayoutCompat.LayoutParams(delLength, ViewGroup.LayoutParams.MATCH_PARENT));
 
-            HCViewHolder holder = new HCViewHolder(container);
+            VH holder = createMyViewHolder(container);
 
             return holder;
         }
 
-        @Override
-        public void onBindViewHolder(HCViewHolder holder, int position) {
-            Map<Integer, Object> itemData = data.get(position);
-            Iterator<Integer> ids = itemData.keySet().iterator();
-            while(ids.hasNext()) {
-                Integer id = ids.next();
-                View v = (View)holder.getItemView().findViewById(id);
-                if(v instanceof TextView) {
-                    TextView tv = (TextView)v;
-                    tv.setText(itemData.get(id).toString());
-                } else if(v instanceof ImageView) {
-                    ImageView iv = (ImageView)v;
-                    Glide.with(context)
-                            .load(data.get(position).toString())
-                            .into(iv);
-                } else {
-                    //不支持的控件类型，忽略
-                }
-            }
-        }
+        //创建自己的ViewHolder，但是必须继承HCViewHolder
+        public abstract VH createMyViewHolder(View v);
 
         @Override
         public int getItemCount() {
             return data == null ? 0 : data.size();
+        }
+
+        public T getItem(int position) {
+            return data.get(position);
         }
 
         public void removeItem(int position) {
@@ -279,13 +266,14 @@ public class HCRecyclerView extends RecyclerView{
         }
     }
 
-    public static class HCViewHolder extends ViewHolder {
-
-        private View itemView;
+    public static class HCViewHolder extends RecyclerView.ViewHolder {
+        protected View itemView;
+        protected View deleteView;
 
         public HCViewHolder(View itemView) {
             super(itemView);
             this.itemView = itemView;
+            deleteView = itemView.findViewById(R.id.tv_delete_item);
         }
 
         public View getItemView() {
@@ -293,10 +281,9 @@ public class HCRecyclerView extends RecyclerView{
         }
 
         public View getDeleteView() {
-            return itemView.findViewById(R.id.tv_delete_item);
+            return deleteView;
         }
     }
-
 
     public static class HCLinearLayoutManager extends LinearLayoutManager {
         private boolean canScrollVertically = true;
@@ -325,11 +312,11 @@ public class HCRecyclerView extends RecyclerView{
         }
     }
 
-    public static interface ItemClickListener {
+    public static interface DeleteListener {
         public void onDelete(int pos);
     }
 
-    public void setItemClickListener(ItemClickListener l) {
-        this.l = l;
+    public void setDeleteListener(DeleteListener deleteListener) {
+        this.deleteListener = deleteListener;
     }
 }
