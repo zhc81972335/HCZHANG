@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">MyCustomView</string>
+    <string name="delete">delete</string>
+</resources>
