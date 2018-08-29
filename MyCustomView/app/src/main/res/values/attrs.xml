@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="HCWebView">
+        <attr name="support_zoom" format="boolean"/>
+        <attr name="auto_load_img" format="boolean"/>
+    </declare-styleable>
+</resources>

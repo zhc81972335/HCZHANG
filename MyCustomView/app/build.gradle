@@ -2,7 +2,6 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 23
-    buildToolsVersion "23.0.3"
 
     defaultConfig {
         applicationId "com.whzydz.mycustomview"
@@ -20,9 +19,9 @@ android {
 }
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
-    testCompile 'junit:junit:4.12'
-    compile 'com.android.support:appcompat-v7:23.+'
-    compile 'com.android.support:recyclerview-v7:23.2.1'
-    compile 'com.github.bumptech.glide:glide:3.8.0'
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    testImplementation 'junit:junit:4.12'
+    implementation 'com.android.support:appcompat-v7:23.2.1'
+    implementation 'com.android.support:recyclerview-v7:23.2.1'
+    implementation 'com.github.bumptech.glide:glide:3.8.0'
 }
